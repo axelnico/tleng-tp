@@ -9,20 +9,30 @@ import sys
 # -----------------------------------------------------------------------------
 
 tokens = (
-    'LCORCHETE','RCORCHETE',
-    'DESCRIPTOR','DESCRIPTORVALOR'
+    'LCORCHETE','RCORCHETE', 'DESCRIPTOR', 'LLLAVE', 'RLLAVE', 'LPAREN', 'RPAREN'
+    ,'DESCRIPTORVALOR','RES','NUMBER','MOVIMIENTO',
+    'SIMBOLO', 'COMENTARIO'
     )
 
 # Tokens
 
 t_LCORCHETE    = r'\['
 t_RCORCHETE    = r'\]'
-t_DESCRIPTOR    = r'[a-zA-Z0-9\s]+'
-t_DESCRIPTORVALOR    = r'\"[a-zA-Z0-9\s]+\"'
+t_DESCRIPTOR    = r'[a-zA-Z0-9]+'
+t_DESCRIPTORVALOR    = r'\"[^\"]+\"'
+t_RES                = r'(1-0|0-1|1\/2-1\/2)'
+t_MOVIMIENTO        = r'((P|N|B|R|Q|K)?[a-h]?[1-8]?x?[a-h][1-8])|O-O-O|O-O'
+t_SIMBOLO           = r'\+|\+\+|\!|\?'
+t_LLLAVE             = r'{'
+t_RLLAVE            = r'}'
+t_LPAREN             = r'\('
+t_RPAREN            = r'\)'
+t_COMENTARIO             = r'({[\s\S]*} | \([\s\S]*\))'
 
 def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)
+    r'\d+\.'
+    l = len(t.value)
+    t.value = int(t.value[:l-1])
     return t
 
 # Ignored characters
@@ -50,10 +60,49 @@ lexer = lex.lex()
 # dictionary of names (for storing variables)
 #names = { }
 
+def p_inicio_pgn(p):
+    '''pgn : LCORCHETE DESCRIPTOR DESCRIPTORVALOR RCORCHETE descriptor_evento NUMBER jugada desc_jugada resultado'''
+    if(p[6] != 1):
+        raise Exception("La jugada no empieza en 1")
+
+
 def p_linea_descriptor(p):
     '''descriptor_evento : LCORCHETE DESCRIPTOR DESCRIPTORVALOR RCORCHETE descriptor_evento 
                          | empty'''
     #names[p[1]] = p[3]
+
+def p_jugada(p):
+    '''jugada : NUMBER jugada desc_jugada
+              | empty'''
+    p[0] = p[1]
+    if len(p) == 3 and not p[2] is None:
+        if p[1] != p[2] - 1:
+            raise Exception("Los numeros de jugada no son secuenciales")
+
+def p_desc_jugada(p):
+    '''desc_jugada : MOVIMIENTO simbolo comentario movimiento simbolo comentario'''    
+    #p[2] = p[0] + 1
+    #if(p[2] != p[0] + 1):
+    #    raise Exception("Los numeros de jugada no son secuenciales")
+    #names[p[1]] = p[3]
+
+def p_movimiento(p):
+    '''movimiento : MOVIMIENTO 
+                  | empty'''
+
+def p_simbolo(p):
+    '''simbolo : SIMBOLO 
+                | empty'''
+
+def p_comentario(p):
+    '''comentario : COMENTARIO'''
+    
+#def p_contenido(p):
+#    '''contenido : comentario TEXTO comentario 
+#                 | empty'''
+    
+def p_resultado(p):
+    '''resultado : RES'''
 
 def p_empty(p):
     'empty :'
@@ -95,7 +144,10 @@ def p_expression_name(p):
 
 '''
 def p_error(p):
-    print(f"Syntax error at {p.value!r}")
+    if p is None:
+        print("Parsing error")
+    else:
+        print(f"Syntax error at {p.value!r}")
 
 import ply.yacc as yacc
 yacc.yacc()
@@ -109,12 +161,12 @@ data = sys.stdin.read()
 lexer.input(data)
 
 # Tokenize
-'''while True:
+while True:
     tok = lexer.token()
     if not tok:
         break      # No more input
     print(tok)
-'''
-yacc.parse(data)
+
+yacc.parse(data,debug=False)
 
     
