@@ -9,25 +9,60 @@ import sys
 # -----------------------------------------------------------------------------
 
 tokens = (
-    'LCORCHETE','RCORCHETE', 'DESCRIPTOR', 'LLLAVE', 'RLLAVE', 'LPAREN', 'RPAREN'
-    ,'DESCRIPTORVALOR','RES','NUMBER','MOVIMIENTO',
-    'SIMBOLO', 'COMENTARIO'
+    'DESCRIPTOR', 'LLLAVE', 'RLLAVE', 'LPAREN', 'RPAREN','RES','NUMBER','MOVIMIENTO',
+    'SIMBOLO', 'TEXTO', 'CONTINUAJUGADA'
     )
 
 # Tokens
 
-t_LCORCHETE    = r'\['
-t_RCORCHETE    = r'\]'
-t_DESCRIPTOR    = r'[a-zA-Z0-9]+'
-t_DESCRIPTORVALOR    = r'\"[^\"]+\"'
+t_DESCRIPTOR    = r'\[[^\[\]]+ \"[^\[\]]+\"\]'
 t_RES                = r'(1-0|0-1|1\/2-1\/2)'
 t_MOVIMIENTO        = r'((P|N|B|R|Q|K)?[a-h]?[1-8]?x?[a-h][1-8])|O-O-O|O-O'
 t_SIMBOLO           = r'\+|\+\+|\!|\?'
-t_LLLAVE             = r'{'
-t_RLLAVE            = r'}'
-t_LPAREN             = r'\('
-t_RPAREN            = r'\)'
-t_COMENTARIO             = r'({[\s\S]*} | \([\s\S]*\))'
+
+comentarios_abiertos  = 0
+
+# States
+states = (
+    ('insideComment','exclusive'),
+)
+
+def t_insideComment_INITIAL_LLLAVE(t):
+    r'{'
+    global comentarios_abiertos
+    comentarios_abiertos +=1
+    t.lexer.begin('insideComment')
+    return t
+
+
+def t_insideComment_INITIAL_RLLAVE(t):
+    r'}'
+    global comentarios_abiertos
+    comentarios_abiertos -=1
+    if comentarios_abiertos == 0:
+        t.lexer.begin('INITIAL')
+    return t
+
+def t_insideComment_INITIAL_LPAREN(t):
+    r'\('
+    global comentarios_abiertos
+    comentarios_abiertos +=1
+    t.lexer.begin('insideComment')
+    return t
+
+def t_insideComment_INITIAL_RPAREN(t):
+    r'\)'
+    global comentarios_abiertos
+    comentarios_abiertos -=1
+    if comentarios_abiertos == 0:
+        t.lexer.begin('INITIAL')
+    return t
+
+def t_CONTINUAJUGADA(t):
+    r'\d+\.\.\.'
+    l = len(t.value)
+    t.value = int(t.value[:l-3])
+    return t
 
 def t_NUMBER(t):
     r'\d+\.'
@@ -35,14 +70,24 @@ def t_NUMBER(t):
     t.value = int(t.value[:l-1])
     return t
 
+
 # Ignored characters
 t_ignore = ' \t'
+t_insideComment_ignore = ''
+
+def t_insideComment_TEXTO(t):
+    r'[^\{\}\(\)]+'
+    return t
 
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
 
 def t_error(t):
+    print(f"Illegal character {t.value[0]!r}")
+    t.lexer.skip(1)
+
+def t_insideComment_error(t):
     print(f"Illegal character {t.value[0]!r}")
     t.lexer.skip(1)
 
@@ -61,30 +106,52 @@ lexer = lex.lex()
 #names = { }
 
 def p_inicio_pgn(p):
-    '''pgn : LCORCHETE DESCRIPTOR DESCRIPTORVALOR RCORCHETE descriptor_evento NUMBER jugada desc_jugada resultado'''
-    if(p[6] != 1):
+    '''pgn : DESCRIPTOR descriptor NUMBER desc_jugada jugada resultado partida'''
+    if p[3] != p[4] and p[4] is not None:
+        raise Exception("Continuacion de jugada incorrecta")
+    if(p[3] != 1):
         raise Exception("La jugada no empieza en 1")
 
+def p_partida(p):
+    '''partida : DESCRIPTOR descriptor NUMBER desc_jugada jugada resultado partida
+               | empty'''
+    if len(p) == 3:
+        if p[3] != p[4] and p[4] is not None:
+            raise Exception("Continuacion de jugada incorrecta")
+    if len(p) > 2 and  p[3] != 1:
+        raise Exception("La jugada no empieza en 1")
 
 def p_linea_descriptor(p):
-    '''descriptor_evento : LCORCHETE DESCRIPTOR DESCRIPTORVALOR RCORCHETE descriptor_evento 
-                         | empty'''
+    '''descriptor : DESCRIPTOR descriptor
+                  | empty'''
     #names[p[1]] = p[3]
 
 def p_jugada(p):
-    '''jugada : NUMBER jugada desc_jugada
+    '''jugada : NUMBER desc_jugada jugada
               | empty'''
     p[0] = p[1]
-    if len(p) == 3 and not p[2] is None:
-        if p[1] != p[2] - 1:
+    if len(p) == 3:
+        if p[1] != p[2] and p[2] is not None:
+            raise Exception("Continuacion de jugada incorrecta")
+    if len(p) == 3 and not p[3] is None:
+        if p[1] != p[3] - 1:
             raise Exception("Los numeros de jugada no son secuenciales")
 
 def p_desc_jugada(p):
-    '''desc_jugada : MOVIMIENTO simbolo comentario movimiento simbolo comentario'''    
+    '''desc_jugada : MOVIMIENTO simbolo comentario_siguiente_jugada movimiento simbolo comentario'''
+    p[0] = p[3]
+    #p[3] = p[0]    
     #p[2] = p[0] + 1
     #if(p[2] != p[0] + 1):
     #    raise Exception("Los numeros de jugada no son secuenciales")
     #names[p[1]] = p[3]
+
+def p_comentario_con_siguiente_jugada(p):
+    '''comentario_siguiente_jugada : LLLAVE contenido RLLAVE CONTINUAJUGADA
+                                   | LPAREN contenido RPAREN CONTINUAJUGADA
+                                   | empty'''
+    if len(p) == 5:
+        p[0] = p[4]
 
 def p_movimiento(p):
     '''movimiento : MOVIMIENTO 
@@ -92,14 +159,17 @@ def p_movimiento(p):
 
 def p_simbolo(p):
     '''simbolo : SIMBOLO 
-                | empty'''
+               | empty'''
 
 def p_comentario(p):
-    '''comentario : COMENTARIO'''
-    
-#def p_contenido(p):
-#    '''contenido : comentario TEXTO comentario 
-#                 | empty'''
+    '''comentario : LLLAVE contenido RLLAVE
+                  | LPAREN contenido RPAREN
+                  | empty'''
+
+def p_contenido(p):
+    '''contenido : contenido TEXTO contenido 
+                 | comentario
+                 | empty'''
     
 def p_resultado(p):
     '''resultado : RES'''

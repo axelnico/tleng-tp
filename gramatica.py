@@ -33,3 +33,19 @@ comentario -> LLLAVE contenido RLLAVE | LPAREN contenido RPAREN | .
 
 contenido -> comentario TEXTO comentario | .
 
+
+
+Preguntas:
+
+Como hacemos para tokenizar el texto? Tenemos problemas con el texto libre de los comentarios, porque podria aparecer una jugada por ejemplo
+La tokenizacion puede hacer que la misma cadena aparezca en dos o mas tokens? 
+
+si se definen como funciones 
+
+La gramatica es LALR esta bien planteado lo del numero? no se pueden usar atributos heredados por el orden del parsing?
+Esta bien planteada las reglas de la gramatica? se considera a todo como un unico texto?
+Nota de pie de pagina, con respecto al simbolo =, en la pagina 2
+Que mostrar por pantalla
+Que solo la ultima jugada tengo un movimiento o puede tener otra jugada anterior un solo movimiento
+Los descriptores de evento es solo una palabra? puede tener cualquier simbolo? lo mismo para el valor del descriptor? Es obligatorio
+que haya al menos uno
