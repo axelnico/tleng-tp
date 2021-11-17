@@ -10,13 +10,13 @@
 [WhiteElo "?"]
 [BlackElo "?"]
 [PlyCount "45"]
-1. e4 {Notes by Richard Reti} 1... e6 2. d4 d5 3. Nc3 Nf6 4. Bg5 Be7 5. e5 Nfd7
+1. e4  {Notes by Richard Reti} 1... e6 2. d4 d5 3. e6 e6 4. Bg5 Be7 5. e5 Nfd7
 6. h4 {This ingenious method of play which has subsequently been adopted by all
 modern masters is characteristic of Alekhine’s style.} 6... Bxg5 7. hxg5 Qxg5
 8. Nh3 {! The short-stepping knight is always brought as near as possible to
 the actual battle field. Therefore White does not make the plausible move 8 Nf3
 but 8 Nh3 so as to get the knight to f4.} 8... Qe7 9. Nf4 Nf8 10. Qg4 f5 {The
-only move. Not only was 11 Qxg7 threatened but also Nxd5.} 11. exf6 gxf6 12.
+only move. Not only was 11 Qxg7Qxg7 threatened but also Nxd5.} 11. exf6 gxf6 12.
 O-O-O {He again threatens Nxd5.} 12... c6 13. Re1 Kd8 14. Rh6 e5 15. Qh4 Nbd7
 16. Bd3 e4 17. Qg3 Qf7 {Forced - the sacrifice of the knight at d5 was
 threatened and after 17...Qd6 18 Bxe4 dxe4 19 Rxe4 and 20 Qg7 wins.} 18. Bxe4
