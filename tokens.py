@@ -1,0 +1,4 @@
+tokens = (
+    'DESCRIPTOR', 'LLLAVE', 'RLLAVE', 'LPAREN', 'RPAREN','RES','NUMBER','MOVIMIENTO',
+    'SIMBOLO', 'TEXTO', 'CONTINUAJUGADA', 
+    )
