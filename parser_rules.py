@@ -14,7 +14,7 @@ def gramar_rules_jugada(p):
         if p[1] != p[3]["numero_jugada"] - 1:
             raise Exception(f"Error. Los numeros de jugada no son secuenciales: {p[3]['numero_jugada']} y {p[1]} en linea {p.lineno(1)}")
         if p[2]["cant_movimientos"] == 1:
-            raise Exception(f"Error. Solo el ultimo movimiento puede jugar solo negras o blancas: En jugada {p[1]} en linea {p.lineno(2)}")
+            raise Exception(f"Error. Solo el ultimo movimiento puede jugar solo negras o blancas: En jugada {p[1]} en linea {p.lineno(1)}")
         if p[4] is not None:
             raise Exception(f"Error. El resultado del partido solo puede estar al final: {p[4]} en jugada {p[1]} en linea {p.lineno(4)}")
     else:
